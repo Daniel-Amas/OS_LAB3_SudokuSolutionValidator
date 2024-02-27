@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #define NUM_THREADS 11
-
+pthread_mutex_t mutex;
 
 int sudoku[9][9] = {
 	{5, 3, 4, 6, 7, 8, 9, 1, 2},
@@ -29,8 +29,8 @@ int subgridResult[9]; // Array to store subgrid validation results
 
 // Thread function to check all rows
 void *checkRow(void *param){
-    parameters *data = (parameters *)param;
-    int startRow = data->startRow;
+    parameters *rowdata = (parameters *)param;
+    int startRow = rowdata->startRow;
 
     for (int i = startRow; i < startRow + 1; i++)
     {
@@ -43,6 +43,7 @@ void *checkRow(void *param){
                 pthread_mutex_lock(&mutex);
                 rowResult[startRow] = 0; // Invalid row
                 pthread_mutex_unlock(&mutex);
+
                 pthread_exit(NULL);
             }
             else
@@ -51,15 +52,16 @@ void *checkRow(void *param){
             }
         }
     }
-
+    pthread_mutex_lock(&mutex);
     rowResult[startRow] = 1; // Valid row
+    pthread_mutex_unlock(&mutex);
     pthread_exit(NULL);
 }
 
 // Thread function to check all columns
 void *checkColumn(void *param){
-    parameters *data = (parameters *)param;
-    int startCol = data->startCol;
+    parameters *coldata = (parameters *)param;
+    int startCol = coldata->startCol;
 
     for (int i = startCol; i < startCol + 1; i++)
     {
@@ -80,16 +82,18 @@ void *checkColumn(void *param){
             }
         }
     }
-
+    pthread_mutex_lock(&mutex);
     colResult[startCol] = 1; // Valid column
+    pthread_mutex_unlock(&mutex);
+
     pthread_exit(NULL);
 }
 
 // Thread function to check all 3x3 subgrids
 void *checkSubGrid(void *param){
-    parameters *data = (parameters *)param;
-    int startRow = (data->startRow) * 3;
-    int startCol = (data->startCol) * 3;
+    parameters *subdata = (parameters *)param;
+    int startRow = (subdata->startRow) * 3;
+    int startCol = (subdata->startCol) * 3;
 
     int subgridSet[9] = {0}; // Array to check presence of numbers 1 through 9 in a subgrid
     for (int i = startRow; i < startRow + 3; i++)
@@ -98,9 +102,9 @@ void *checkSubGrid(void *param){
         {
             int num = sudoku[i][j];
             if (subgridSet[num - 1] == 1 || num < 1 || num > 9)
-            {
+            { 
                 pthread_mutex_lock(&mutex);
-                subgridResult[data->startRow * 3 + data->startCol] = 0; // Invalid subgrid
+                subgridResult[subdata->startRow * 3 + subdata->startCol] = 0; // Invalid subgrid
                 pthread_mutex_unlock(&mutex);
                 pthread_exit(NULL);
             }
@@ -110,15 +114,18 @@ void *checkSubGrid(void *param){
             }
         }
     }
-
-    subgridResult[data->startRow * 3 + data->startCol] = 1; // Valid subgrid
+    pthread_mutex_lock(&mutex);
+    subgridResult[subdata->startRow * 3 + subdata->startCol] = 1; // Valid subgrid
+    pthread_mutex_unlock(&mutex);
     pthread_exit(NULL);
 }
 
 int main() {
 	pthread_t threads[NUM_THREADS];
+    pthread_mutex_init(&mutex,NULL);
 	int threadIndex = 0;
 	
+
     // Creating threads for row checks
     for (int i = 0; i < 9; i++)
     {
@@ -174,5 +181,7 @@ int main() {
         printf("The Sudoku puzzle is invalid.\n");
     }
 
+
+    pthread_mutex_destroy(&mutex);
     return 0;
 }
