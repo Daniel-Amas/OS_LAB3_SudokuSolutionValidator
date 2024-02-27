@@ -26,6 +26,7 @@ typedef struct
 int rowResult[9];     // Array to store row validation results
 int colResult[9];     // Array to store column validation results
 int subgridResult[9]; // Array to store subgrid validation results
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Thread function to check all rows
 void *checkRow(void *param){
