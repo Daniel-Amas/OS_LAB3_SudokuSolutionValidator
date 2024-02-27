@@ -40,7 +40,9 @@ void *checkRow(void *param){
             int num = sudoku[i][j];
             if (rowSet[num - 1] == 1 || num < 1 || num > 9)
             {
+                pthread_mutex_lock(&mutex);
                 rowResult[startRow] = 0; // Invalid row
+                pthread_mutex_unlock(&mutex);
                 pthread_exit(NULL);
             }
             else
@@ -67,7 +69,9 @@ void *checkColumn(void *param){
             int num = sudoku[j][i];
             if (colSet[num - 1] == 1 || num < 1 || num > 9)
             {
+                pthread_mutex_lock(&mutex);
                 colResult[startCol] = 0; // Invalid column
+                pthread_mutex_unlock(&mutex);
                 pthread_exit(NULL);
             }
             else
@@ -95,7 +99,9 @@ void *checkSubGrid(void *param){
             int num = sudoku[i][j];
             if (subgridSet[num - 1] == 1 || num < 1 || num > 9)
             {
+                pthread_mutex_lock(&mutex);
                 subgridResult[data->startRow * 3 + data->startCol] = 0; // Invalid subgrid
+                pthread_mutex_unlock(&mutex);
                 pthread_exit(NULL);
             }
             else
